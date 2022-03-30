@@ -1,32 +1,21 @@
-/*
- * This file is part of SzimatSzatyor.
- *
- * SzimatSzatyor is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
-
- * SzimatSzatyor is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with SzimatSzatyor.  If not, see <http://www.gnu.org/licenses/>.
- */
+#include <iostream>
+#include <string>
+#include <WS2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
 
 #include <Windows.h>
 #include <TlHelp32.h>
 #include <psapi.h>
 #include <Aclapi.h>
 #include <Shlwapi.h>
-
 #include <cstring>
 #include <cstdio>
 #include <list>
 #include <algorithm>
-
 #include "HookEntryManager.h"
+#include <string>
+
+using namespace std;
 
 // default name of the process which will be hooked
 const char* lookingProcessName = "Wow.exe";
@@ -53,15 +42,10 @@ HANDLE OpenClientProcess(DWORD /* processID */);
 bool InjectDLL(DWORD /* processID */, const char* /* dllLocation */);
 
 int main(int argc, char* argv[])
-{
+{   
+
     // nice title :)
     SetConsoleTitle("SzimatSzatyor, WoW injector sniffer");
-
-    // some info
-    printf("Welcome to SzimatSzatyor, a WoW injector sniffer.\n");
-    printf("SzimatSzatyor is distributed under the GNU GPLv3 license.\n");
-    printf("Source code is available at: ");
-    printf("http://github.com/Anubisss/SzimatSzatyor\n\n");
 
     if (argc > 2)
     {
@@ -233,8 +217,9 @@ int main(int argc, char* argv[])
 
     printf("DLL: %s\n", dllPath);
 
-    if (InjectDLL(processID, dllPath))
+    if (InjectDLL(processID, dllPath)) {
         printf("\nInjection of '%s' is successful.\n\n", injectDLLName);
+    }
     else
         printf("\nInjection of '%s' is NOT successful.\n\n", injectDLLName);
 

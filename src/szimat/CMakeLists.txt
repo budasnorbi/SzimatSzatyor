@@ -17,7 +17,6 @@ add_library(szimat SHARED
     main.cpp
     ConsoleManager.h
     HookManager.h
-    PacketDump.h
 )
 
 target_link_libraries(szimat
@@ -31,15 +30,3 @@ include_directories(
     ${SZIMAT_SZATYOR_SHARED_HEADERS}
 )
 
-# this condition is unnecessary but...
-if(WIN32)
-    # copies the README and COPYING files to the output directory (build/bin)
-    add_custom_command(TARGET szimat POST_BUILD COMMAND
-                       ${CMAKE_COMMAND} -E copy
-                       ${PROJECT_SOURCE_DIR}/README.md
-                       ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$(ConfigurationName)/)
-    add_custom_command(TARGET szimat POST_BUILD COMMAND
-                       ${CMAKE_COMMAND} -E copy
-                       ${PROJECT_SOURCE_DIR}/COPYING
-                       ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$(ConfigurationName)/)
-endif()

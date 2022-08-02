@@ -250,21 +250,8 @@ void sendBuffer(DWORD packetOpcode, DWORD buffer, DWORD packetSize, WORD initial
     DWORD readOffset1 = initialReadOffset;
     for (DWORD i = 0; i < packetSize; ++i)
     {
-        if (i % 0x10 != 0)
-        {
-            continue;
-        }
-
-        for (DWORD j = 0; j < 0x10; ++j)
-        {
-            if ((i + j) > packetSize - 1)
-            {
-                break;
-            }
-
-            char hexData = *(char *)(buffer + readOffset1++);
-            byteArray.push_back(hexData);
-        }
+        char hexData = *(char*)(buffer + readOffset1++);
+        byteArray.push_back(hexData);
     }
 
     byteArray.resize(byteArray.size() - initialReadOffset);

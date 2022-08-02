@@ -14,3 +14,4 @@
 #   along with SzimatSzatyor.  If not, see <http://www.gnu.org/licenses/>.
 
 build/*
+.vs

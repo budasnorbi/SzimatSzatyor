@@ -38,7 +38,7 @@ BYTE machineCodeHookSend[JMP_INSTRUCTION_SIZE] = {0};
 BYTE defaultMachineCodeSend[JMP_INSTRUCTION_SIZE] = {0};
 
 // this function will be called when recv called in the client
-DWORD __fastcall RecvHook_PreWOD(void * /* thisPTR */, void * /* dummy */, void * /* param1 */, void * /* param2 */, void * /* param3 */);
+DWORD __fastcall RecvHook(void * /* thisPTR */, void * /* dummy */, void * /* param1 */, void * /* param2 */, void * /* param3 */);
 
 // this recv prototype fits with the client's one
 typedef DWORD(__thiscall *RecvProto)(void *, void *, void *, void *);
@@ -189,7 +189,7 @@ DWORD MainThreadControl(LPVOID /* param */)
     case HookEntryManager::HOOK_WOW_EXP::EXP_WLK:
     case HookEntryManager::HOOK_WOW_EXP::EXP_CATA:
     case HookEntryManager::HOOK_WOW_EXP::EXP_MOP:
-        hookFunctionAddress = (DWORD)RecvHook_PreWOD;
+        hookFunctionAddress = (DWORD)RecvHook;
         break;
     default:
         printf("Invalid hook expansion: %d\n\n", (int)hookVersion);
@@ -228,43 +228,22 @@ void sendBuffer(DWORD packetOpcode, DWORD buffer, DWORD packetSize, WORD initial
         return;
     }
 
-    string ipAddress = "127.0.0.1";
-    int port = 54000;
-
     WSAData data;
-    WORD ver = MAKEWORD(2, 2);
+    WORD version = MAKEWORD(2, 2);
 
-    int wsResult = WSAStartup(ver, &data);
-    if (wsResult != 0)
-    {
-        cerr << "Can't start Winsock, Err #" << wsResult << endl;
-        return;
-    }
-
-    // Create socket
-    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == INVALID_SOCKET)
-    {
-        cerr << "Can't create socket, Err #" << WSAGetLastError() << endl;
-        WSACleanup();
+    int wsResult = WSAStartup(version, &data);
+    if(wsResult != 0){
         return;
     }
 
     // Fill in a hint structure
-    sockaddr_in hint;
-    hint.sin_family = AF_INET;
-    hint.sin_port = htons(port);
-    inet_pton(AF_INET, ipAddress.c_str(), &hint.sin_addr);
+    sockaddr_in server;
+    server.sin_family = AF_INET;
+    server.sin_port = htons(54000);
+    inet_pton(AF_INET, "127.0.0.1", &server.sin_addr);
 
-    // Connect to server
-    int connResult = connect(sock, (sockaddr *)&hint, sizeof(hint));
-    if (connResult == SOCKET_ERROR)
-    {
-        cerr << "Can't connect to server, Err #" << WSAGetLastError() << endl;
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
+    // Create socket
+    SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
 
     vector<char> byteArray;
 
@@ -300,7 +279,11 @@ void sendBuffer(DWORD packetOpcode, DWORD buffer, DWORD packetSize, WORD initial
     byteArray.insert(byteArray.begin(), b1);
     byteArray.insert(byteArray.begin(), b0);
 
-    int sendResult = send(sock, byteArray.data(), byteArray.size(), 0);
+    int sendResult = sendto(sock, byteArray.data(), byteArray.size(), 0, (sockaddr*)&server, sizeof(server));
+    if (sendResult == SOCKET_ERROR)
+    {
+        return;
+    }
 
     closesocket(sock);
     WSACleanup();
@@ -337,18 +320,15 @@ DWORD __fastcall SendHook(void *thisPTR, void * /* dummy */, void *param1, void 
     return returnValue;
 }
 
-DWORD __fastcall RecvHook_PreWOD(void *thisPTR, void * /* dummy */, void *param1, void *param2, void *param3)
+DWORD __fastcall RecvHook(void *thisPTR, void * /* dummy */, void *param1, void *param2, void *param3)
 {
-    // 2 bytes before MOP, 4 bytes after MOP
-    WORD packetOpcodeSize = buildNumber <= WOW_MOP_16135 ? 2 : 4;
-
     DWORD buffer = *(DWORD *)((DWORD)param2 + 4);
 
-    DWORD packetOcode = packetOpcodeSize == 2 ? *(WORD *)buffer : *(DWORD *)buffer;
+    DWORD packetOcode = *(WORD*)buffer;
 
     DWORD packetSize = *(DWORD *)((DWORD)param2 + 16); // totalLength, writePos
 
-    WORD initialReadOffset = packetOpcodeSize;
+    WORD initialReadOffset = 2;
 
     sendBuffer(packetOcode, buffer, packetSize, initialReadOffset);
 
